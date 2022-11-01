@@ -6,7 +6,7 @@ import edu.princeton.cs.algs4.ST;
 
 /**
  *
- * @author Pen
+ * @author Rianna McIntyre + Penny Chanthavong
  *
  * @param <Value>
  */
@@ -19,7 +19,7 @@ public class KdTreeST<Value> {
         private Node lb;		// the left/bottom subtree
         private Node rt;		// the right/top subtree
 
-        Node() {
+        public Node() {
             // TODO
         }
     }
@@ -52,11 +52,19 @@ public class KdTreeST<Value> {
 
     /**
      * Associates the value with the point.
-     * If the point exists, the old value is replaced with
-     * the new value.
      *
      * @param p
      * @param val
+     */
+    /*
+     * hints:
+     * - splitting line can be thought of as left or not left therefore if the value
+     * is less then it goes to the left everything else goes right
+     * -  If the point already exists, the old value is replaced with
+     * the new value.
+     * - best implemented using private helper methods, see BST.java,
+     * recommended: use orientation (vertical or horizontal) as an argument to 
+     * the helper method
      */
     public void put(Point2D p, Value val) {
         if (p == null || val == null)
@@ -70,6 +78,14 @@ public class KdTreeST<Value> {
      *
      * @param p
      * @return
+     */
+    /*
+     * hints:
+     * - splitting line can be thought of as left or not left therefore if the value
+     * is less then it goes to the left everything else goes right
+     * - best implemented using private helper methods, see BST.java,
+     * recommended: use orientation (vertical or horizontal) as an argument to 
+     * the helper method
      */
     public Value get(Point2D p) {
         if (p == null)
@@ -96,6 +112,10 @@ public class KdTreeST<Value> {
      *
      * @return keys in the symbol table
      */
+    /*
+     * hints:
+     * - returns iterable with zero points if there are no points in the data structure
+     */
     public Iterable<Point2D> points() {
         return null; // TODO
     }
@@ -105,6 +125,13 @@ public class KdTreeST<Value> {
      *
      * @param rect
      * @return
+     */
+    /*
+     * hints:
+     * - do not search a subtree whose corresponding rectangle doesn't intersect the query rectangle
+     * - points on the boundary of a rectangle are considered
+     * - two rectangles intersect if they have just one point in common
+     * - returns iterable with zero points if there are no points in the data structure
      */
     public Iterable<Point2D> range(RectHV rect) {
         if (rect == null)
@@ -119,6 +146,14 @@ public class KdTreeST<Value> {
      *
      * @param p Point2D
      * @return the nearest point
+     */
+    /*
+     * hints:
+     * - when there are 2 subtrees to explore, choose the first subtree that is 
+     * on the same side of the splitting line as the query point.
+     * - do not search a subtree if no point in its corresponding rectangle could
+     * be closer to the query point than the best candidate point found so far.
+     * - if there are two (or more) nearest points return any one
      */
     public Point2D nearest(Point2D p) {
         if (p == null)
