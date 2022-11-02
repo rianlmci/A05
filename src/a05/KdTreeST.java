@@ -320,6 +320,15 @@ public class KdTreeST<Value> {
      * = = = Test Client = = =
      */
     public static void main(String[] args) {
+    	KdTreeST<Integer> kd = new KdTreeST<Integer>();
+
+    	kd.put(new Point2D(2, 3), 1);    
+    	kd.put(new Point2D(4, 2), 2);    	
+    	kd.put(new Point2D(4, 5), 3);    	
+    	kd.put(new Point2D(3, 3), 4);    	
+    	kd.put(new Point2D(1, 5), 5);  
+    	kd.put(new Point2D(4, 4), 6);    	
+
         System.out.println("Hello world!");
     }
 }
