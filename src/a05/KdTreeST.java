@@ -12,16 +12,125 @@ import edu.princeton.cs.algs4.ST;
  */
 public class KdTreeST<Value> {
 
+    private static final boolean VERTICAL   = true; // | in a tree
+    private static final boolean HORIZONTAL = false; // - in a tree
+    private Node root; //root of the tree
+    int size = 0; // size of the tree
+    int height = 0; //height of the tree
     private class Node {
         private Point2D p; 		// the point
         private Value value; 	// the symbol table maps the point to this value
-        private RectHV rect;	// the axis-aligned rectangle corresponding to this node
+        private RectHV rect;	// the axis-aligned rectangle corresponding to this node (Aka Bounding Box)
         private Node lb;		// the left/bottom subtree
         private Node rt;		// the right/top subtree
+        private boolean lineDirection;
 
-        public Node() {
-            // TODO
+        public Node(Point2D p, Value val)  {
+            this.p = p;
+            this.value = val;
+            if(isEmpty()){
+                this.rect = new RectHV(
+                        Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY,
+                        Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+                root = this; //what I'm trying to do is assign /this/ node to the KD tree.
+                this.lineDirection = VERTICAL;
+                size += 1;
+                return;
+            }
+
+            this.rect = createBounds(p);
+            size += 1;
         }
+    }
+
+    /**
+     * Helper method for creating a node
+     * @param p point to insert into the tree
+     * @return bounds for the rectangle of this node.
+     */
+    private RectHV createBounds(Point2D p) {
+        Double currentXMin = root.rect.xmin();
+        Double currentYMin = root.rect.ymin();
+        Double currentXMax = root.rect.xmax();
+        Double currentYMax = root.rect.ymax();
+        Node current = root;
+
+
+        //NAVIGATE TO THE BOTTOM OF THE TREE, UPDATE BOUNDS...
+        while (current.lb != null || current.rt != null) {
+
+            //We look at comparing x or y based on the parent’s bound-direction.
+            if (current.lineDirection == VERTICAL){
+                //if we are comparing x, we update the x bounds
+                if(current.p.x() > p.x()){ //if the node we insert is less than the parent
+                    currentXMax = current.p.x(); //The bound will be the comparison coordinate (x/y) of the parent.
+                    if(current.lb != null) {
+                        current = current.lb; //we go to the left of the tree
+                    }
+                    else {
+                        //reached end of tree, return.
+                        return new RectHV(currentXMin,currentYMin,currentXMax,currentYMax);
+                    }
+                }
+                else/*greater or equal to the parent*/{
+                    currentXMin = current.p.x();
+                    if(current.rt != null) {
+                        current = current.rt;
+                    }
+                    else {
+                        //reached end of tree, return.
+                        return new RectHV(currentXMin,currentYMin,currentXMax,currentYMax);
+                    }
+                }
+            }
+
+            else/*line direction is horizontal*/{
+                //if we are comparing y, we update the y bounds
+                if(current.p.y() > p.y()){ //if the node we insert is less than the parent
+                    currentYMax = current.p.y(); //The bound will be the comparison coordinate (x/y) of the parent.
+                    if(current.lb != null) {
+                        current = current.lb; //we go to the left of the tree
+                    }
+                    else {
+                        //reached end of tree, return.
+                        return new RectHV(currentXMin,currentYMin,currentXMax,currentYMax);
+                    }
+                }
+                else/*greater or equal to the parent*/{
+                    currentYMin = current.p.y();
+                    if(current.rt != null) {
+                        current = current.rt;
+                    }
+                    else {
+                        //reached end of tree, return.
+                        return new RectHV(currentXMin,currentYMin,currentXMax,currentYMax);
+                    }
+                }
+            }
+        }
+
+        //Do one last compare to end point
+        if (current.lineDirection == VERTICAL) {
+            //if we are comparing x, we update the x bounds
+            if (current.p.x() > p.x()) { //if the node we insert is less than the parent
+                currentXMax = current.p.x(); //The bound will be the comparison coordinate (x/y) of the parent.
+            }
+            else/*greater or equal to the parent*/ {
+                currentXMin = current.p.x();
+            }
+        }
+
+        else/*line direction is horizontal*/{
+                //if we are comparing y, we update the y bounds
+                if(current.p.y() > p.y()){ //if the node we insert is less than the parent
+                    currentYMax = current.p.y(); //The bound will be the comparison coordinate (x/y) of the parent.
+                }
+                else/*greater or equal to the parent*/{
+                    currentYMin = current.p.y();
+                }
+            }
+
+        return new RectHV(currentXMin,currentYMin,currentXMax,currentYMax);
     }
 
     /**
@@ -37,8 +146,7 @@ public class KdTreeST<Value> {
      * @return
      */
     public boolean isEmpty() {
-//		return false; // TODO
-        return size() == 0;
+        return root == null;
     }
 
     /**
@@ -47,7 +155,7 @@ public class KdTreeST<Value> {
      * @return
      */
     public int size() {
-        return 0; // TODO
+        return this.size;
     }
 
     /**
@@ -70,7 +178,53 @@ public class KdTreeST<Value> {
         if (p == null || val == null)
             throw new NullPointerException("Input cannot be null.");
 
-        // TODO
+        Node newNode = new Node(p,val);
+
+        if(isEmpty()){
+            root = newNode;
+        }
+
+        Node current = root;
+
+        //NAVIGATE TO THE BOTTOM OF THE TREE...
+        while (current.lb != null || current.rt != null) /*current has children*/ {
+            //We look at comparing x or y based on the parent’s bound-direction.
+            if (current.lineDirection == VERTICAL) {
+                if (current.p.x() > p.x()) { //if the node we insert is less than the parent
+                    current = current.lb; //we go to the left of the tree
+                }
+                else/*greater or equal to the parent i.e 'not left'*/ {
+                    current = current.rt; //we go to the right of the tree
+                }
+            }
+            else/*line direction is horizontal*/ {
+                if (current.p.y() > p.y()) { //if the node we insert is less than the parent
+                    current = current.lb; //we go to the left of the tree
+                }
+                else/*greater or equal to the parent i.e 'not left'*/ {
+                    current = current.rt; //we go to the right of the tree
+                }
+            }
+        }
+
+        //Do one last compare to end point
+        newNode.lineDirection = !current.lineDirection; //opposite direction
+        if (current.lineDirection == VERTICAL) {
+            if (current.p.x() > p.x()) { //if the node we insert is less than the parent
+                current.lb = newNode; //we go to the left of the tree
+            }
+            else/*greater or equal to the parent i.e 'not left'*/ {
+                current.rt =newNode; //we go to the right of the tree
+            }
+        }
+        else/*line direction is horizontal*/ {
+            if (current.p.y() > p.y()) { //if the node we insert is less than the parent
+               current.lb = newNode; //we go to the left of the tree
+            }
+            else/*greater or equal to the parent i.e 'not left'*/ {
+                current.rt = newNode; //we go to the right of the tree
+            }
+        }
     }
 
     /**
