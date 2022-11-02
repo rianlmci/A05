@@ -32,8 +32,8 @@ public class KdTreeST<Value> {
                 this.rect = new RectHV(
                         Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY,
                         Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-                root = this; //what I'm trying to do is assign /this/ node to the KD tree.
                 this.lineDirection = VERTICAL;
+                root = this; //what I'm trying to do is assign /this/ node to the KD tree.
                 size += 1;
                 return;
             }
@@ -167,7 +167,7 @@ public class KdTreeST<Value> {
     /*
      * hints:
      * - splitting line can be thought of as left or not left therefore if the value
-     * is less then it goes to the left everything else goes right
+     * is less than, it goes to the left and everything else goes right
      * -  If the point already exists, the old value is replaced with
      * the new value.
      * - best implemented using private helper methods, see BST.java,
