@@ -2,7 +2,6 @@ package a05;
 
 import edu.princeton.cs.algs4.Point2D;
 import edu.princeton.cs.algs4.RectHV;
-import edu.princeton.cs.algs4.ST;
 
 /**
  *
@@ -11,18 +10,17 @@ import edu.princeton.cs.algs4.ST;
  * @param <Value>
  */
 public class KdTreeST<Value> {
-
-    private static final boolean VERTICAL   = true; // | in a tree
-    private static final boolean HORIZONTAL = false; // - in a tree
+    private final boolean VERTICAL   = true; // | in a tree
+    private final boolean HORIZONTAL = false; // - in a tree
     private Node root; //root of the tree
     int size = 0; // size of the tree
     private class Node {
         private Point2D p; 		// the point
         private Value value; 	// the symbol table maps the point to this value
         private RectHV rect;	// the axis-aligned rectangle corresponding to this node (Aka Bounding Box)
-        private Node lb;		// the left/bottom subtree
-        private Node rt;		// the right/top subtree
-        private boolean lineDirection;
+        private Node left;		// the left/bottom subtree
+        private Node right;		// the right/top subtree
+        private boolean lineDirection; // line direction of this node (| or -)
 
         public Node(Point2D p, Value val)  {
             this.p = p;
@@ -32,112 +30,105 @@ public class KdTreeST<Value> {
                         Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY,
                         Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
                 this.lineDirection = VERTICAL;
-                root = this; //what I'm trying to do is assign /this/ node to the KD tree.
+                root = this;
                 size += 1;
                 return;
             }
 
-            this.rect = createBounds(p);
+            this.rect = createBoundsAndLineDirections(p);
             size += 1;
         }
     }
 
     /**
-     * Helper method for creating a node
+     * Helper method for creating a node that sets the bound rectangle
+     * and also sets the line direction of each node.
      * @param p point to insert into the tree
      * @return bounds for the rectangle of this node.
      */
-    private RectHV createBounds(Point2D p) {
+    private RectHV createBoundsAndLineDirections(Point2D p) {
         Double currentXMin = root.rect.xmin();
         Double currentYMin = root.rect.ymin();
         Double currentXMax = root.rect.xmax();
         Double currentYMax = root.rect.ymax();
         Node current = root;
 
-
         //NAVIGATE TO THE BOTTOM OF THE TREE, UPDATE BOUNDS...
-        while (current.lb != null || current.rt != null) {
-
-            //We look at comparing x or y based on the parent’s bound-direction.
-            if (current.lineDirection == VERTICAL){
-                //if we are comparing x, we update the x bounds
-                if(current.p.x() > p.x()){ //if the node we insert is less than the parent
-                    currentXMax = current.p.x(); //The bound will be the comparison coordinate (x/y) of the parent.
-                    if(current.lb != null) {
-                        current = current.lb; //we go to the left of the tree
+        while (current.left != null || current.right != null) {
+            if(current.p == p){
+                return current.rect; //don't update bounds for duplicates
+            }
+            //We look at comparing x or y based on the parent’s bound-direction (horizontal or vertical)
+            if (current.lineDirection == VERTICAL){ //if we are comparing x, we update the x bounds
+                if(current.p.x() > p.x()){ //if the node we insert is less than the parent...
+                    currentXMax = current.p.x(); //Update max bound (X)
+                    if(current.left != null) {//we go to the left of the node,if it exists.
+                        current.left.lineDirection = !current.lineDirection; //set line direction of nodes as we go down
+                        current = current.left;
                     }
-                    else {
-                        //reached end of tree, return.
+                    else {//reached leaf, return.
                         return new RectHV(currentXMin,currentYMin,currentXMax,currentYMax);
                     }
                 }
-                else/*greater or equal to the parent*/{
-                    currentXMin = current.p.x();
-                    if(current.rt != null) {
-                        current = current.rt;
+                else{//if the node we insert is greater or equal to parent...
+                    currentXMin = current.p.x(); //Update min bound (X)
+                    if(current.right != null) {
+                        current.right.lineDirection = !current.lineDirection;
+                        current = current.right;
                     }
                     else {
-                        //reached end of tree, return.
                         return new RectHV(currentXMin,currentYMin,currentXMax,currentYMax);
                     }
                 }
             }
-
-            else/*line direction is horizontal*/{
-                //if we are comparing y, we update the y bounds
-                if(current.p.y() > p.y()){ //if the node we insert is less than the parent
-                    currentYMax = current.p.y(); //The bound will be the comparison coordinate (x/y) of the parent.
-                    if(current.lb != null) {
-                        current = current.lb; //we go to the left of the tree
+            else{//line direction is horizontal, and if we are comparing y, we update the y bounds
+                if(current.p.y() > p.y()){//if the node we insert is less than the parent...
+                    currentYMax = current.p.y(); //Update max bound (Y)
+                    if(current.left != null) {
+                        current.left.lineDirection = !current.lineDirection;
+                        current = current.left;
                     }
                     else {
-                        //reached end of tree, return.
                         return new RectHV(currentXMin,currentYMin,currentXMax,currentYMax);
                     }
                 }
-                else/*greater or equal to the parent*/{
-                    currentYMin = current.p.y();
-                    if(current.rt != null) {
-                        current = current.rt;
+                else{//if the node we insert is greater or equal to parent...
+                    currentYMin = current.p.y(); //Update min bound (Y)
+                    if(current.right != null) {
+                        current.right.lineDirection = !current.lineDirection;
+                        current = current.right;
                     }
                     else {
-                        //reached end of tree, return.
                         return new RectHV(currentXMin,currentYMin,currentXMax,currentYMax);
                     }
                 }
             }
         }
-
-        //Do one last compare to end point
+        //DO ONE LAST UPDATE AT END POINT IF WE REACH VERY BOTTOM OF TREE...
         if (current.lineDirection == VERTICAL) {
-            //if we are comparing x, we update the x bounds
-            if (current.p.x() > p.x()) { //if the node we insert is less than the parent
-                currentXMax = current.p.x(); //The bound will be the comparison coordinate (x/y) of the parent.
+            if (current.p.x() > p.x()) {
+                currentXMax = current.p.x(); //Update max bound (X) one final time...
             }
-            else/*greater or equal to the parent*/ {
-                currentXMin = current.p.x();
+            else{
+                currentXMin = current.p.x(); //Update min bound (X) one final time...
             }
         }
 
-        else/*line direction is horizontal*/{
-                //if we are comparing y, we update the y bounds
-                if(current.p.y() > p.y()){ //if the node we insert is less than the parent
-                    currentYMax = current.p.y(); //The bound will be the comparison coordinate (x/y) of the parent.
+        else{//line direction is horizontal, and if we are comparing y, we update the y bounds
+                if(current.p.y() > p.y()){//if the node we insert is less than the parent
+                    currentYMax = current.p.y(); //Update max bound (Y) one final time...
                 }
-                else/*greater or equal to the parent*/{
-                    currentYMin = current.p.y();
+                else{//greater or equal to the parent
+                    currentYMin = current.p.y(); //Update min bound (Y) one final time...
                 }
             }
-
         return new RectHV(currentXMin,currentYMin,currentXMax,currentYMax);
     }
 
     /**
      * Constructs an empty symbol table of points.
      */
-    public KdTreeST() {
-        // TODO
-    }
+    public KdTreeST() {}
 
     /**
      * Determines whether the symbol table is empty.
@@ -158,8 +149,7 @@ public class KdTreeST<Value> {
     }
 
     /**
-     * Associates the value with the point.
-     *
+     * Associates the value with the point and puts it in the table.
      * @param p
      * @param val
      */
@@ -176,63 +166,10 @@ public class KdTreeST<Value> {
     public void put(Point2D p, Value val) {
         if (p == null || val == null)
             throw new NullPointerException("Input cannot be null.");
-        if (val == null) { //break statement?
+        if (val == null) { //break statement
             return;
         }
         root = put(root, p, val); // starts recursion @ root
-
-        //OLD CODE BELOW HERE THAT WAS WIP ITERATIVE:
-        /*
-        Node newNode = new Node(p,val);
-
-        if(isEmpty()){
-            root = newNode;
-        }
-
-        Node current = root;
-
-        //NAVIGATE TO THE BOTTOM OF THE TREE...
-        while (current.lb != null || current.rt != null)  { //current has children
-            //We look at comparing x or y based on the parent’s bound-direction.
-            if (current.lineDirection == VERTICAL) {
-                if (current.p.x() > p.x()) { //if the node we insert is less than the parent
-                    current = current.lb; //we go to the left of the tree
-                }
-                else { //greater or equal to the parent i.e 'not left'
-                    current = current.rt; //we go to the right of the tree
-                }
-            }
-            else { ///line direction is horizontal
-                if (current.p.y() > p.y()) { //if the node we insert is less than the parent
-                    current = current.lb; //we go to the left of the tree
-                }
-                else{ //greater or equal to the parent i.e 'not left'
-                    current = current.rt; //we go to the right of the tree
-                }
-            }
-
-        }
-
-        //Do one last compare to end point
-        newNode.lineDirection = !current.lineDirection; //opposite direction
-        if (current.lineDirection == VERTICAL) {
-            if (current.p.x() > p.x()) { //if the node we insert is less than the parent
-                current.lb = newNode; //we go to the left of the tree
-            }
-            else{ //greater or equal to the parent i.e 'not left'
-                current.rt =newNode; //we go to the right of the tree
-            }
-        }
-        else { //line direction is horizontal
-            if (current.p.y() > p.y()) { //if the node we insert is less than the parent
-               current.lb = newNode; //we go to the left of the tree
-            }
-            else{ //greater or equal to the parent i.e 'not left'
-                current.rt = newNode; //we go to the right of the tree
-            }
-        }
-        */
-        //END OF OLD WIP CODE
     }
 
     /**
@@ -247,42 +184,48 @@ public class KdTreeST<Value> {
             return new Node(newPoint, val);
         }
 
-        // 0 if parent == new child point
-        // less than 0 if parent is less than new child point
-        // greater than 0 if parent is greater than new child point
+        if(parentNode.p.compareTo(newPoint) == 0){ //if duplicate points
+            parentNode.value = val; //updates duplicate with new value
+            return parentNode;
+        }
+
+        //Quick Compare guide:
+        //0 if parent == new child point
+        //less than 0 if parent is less than new child point
+        //greater than 0 if parent is greater than new child point
         int compareX =  Double.compare(parentNode.p.x(), newPoint.x());
         int compareY =  Double.compare(parentNode.p.y(), newPoint.y());
-        
+
         //Comparing Xs
         if (parentNode.lineDirection == VERTICAL){
-            if (compareX < 0) {  //
-                parentNode.rt = put(parentNode.rt, newPoint, val);
-            }
-
-            else if (compareX > 0) {
-                parentNode.lb = put(parentNode.lb, newPoint, val);
-            }
-
-            else {
-                parentNode.value = val;
-            }
+            navigateTree(parentNode, newPoint, val, compareX);
         }
         //Comparing Ys
         else if (parentNode.lineDirection == HORIZONTAL){
-            if (compareY < 0) {
-                parentNode.rt = put(parentNode.rt, newPoint, val);
-            }
-
-            else if (compareY > 0) {
-                parentNode.lb = put(parentNode.lb, newPoint, val);
-            }
-
-            else {
-                parentNode.value = val;
-            }
+            navigateTree(parentNode, newPoint, val, compareY);
         }
         return parentNode;
     }
+
+    /**
+     * Helper method for put that helps us navigate down the tree to the final destination of
+     * the new node.
+     * @param parentNode node we are traversing left or right from
+     * @param newPoint point of the new node
+     * @param val new node's associated value
+     * @param compareXorY result of Double.compare from either an X or a Y coord, used to navigate the tree
+     */
+    private void navigateTree(Node parentNode, Point2D newPoint, Value val, int compareXorY) {
+        if (compareXorY <= 0) {
+            parentNode.right = put(parentNode.right, newPoint, val);
+        }
+
+        else if (compareXorY > 0) {
+            parentNode.left = put(parentNode.left, newPoint, val);
+        }
+
+    }
+
     /**
      * Returns the value associated with the point p.
      *
@@ -292,7 +235,7 @@ public class KdTreeST<Value> {
     /*
      * hints:
      * - splitting line can be thought of as left or not left therefore if the value
-     * is less than it, it goes to the left, and everything else goes right
+     * is less then it goes to the left everything else goes right
      * - best implemented using private helper methods, see BST.java,
      * recommended: use orientation (vertical or horizontal) as an argument to 
      * the helper method
@@ -300,8 +243,50 @@ public class KdTreeST<Value> {
     public Value get(Point2D p) {
         if (p == null)
             throw new NullPointerException("Point cannot be null.");
+        return get(p,root); //start recursion @ root
+    }
 
-        return null; // TODO
+    /**
+     * Helper method for get!
+     * @param p is the desired point we are looking for
+     * @param currentNode is the node we are looking inside of
+     * @return value associated with the given key rooted in tree at node <code>currentNode</code>.
+     */
+    private Value get(Point2D p, Node currentNode){
+        if(currentNode == null) {
+            return null;
+        }
+        if(currentNode.p.compareTo(p) == 0){
+            return currentNode.value;
+        }
+        // 0 if current point == desired point
+        // less than 0 if current point is less than desired point
+        // greater than 0 if current point is greater than desired point
+        int compareX =  Double.compare(currentNode.p.x(), p.x());
+        int compareY =  Double.compare(currentNode.p.y(), p.y());
+
+        //Comparing Xs
+        if (currentNode.lineDirection == VERTICAL){
+            if (compareX <= 0) {
+               return get(p, currentNode.right);
+            }
+
+            else if (compareX > 0) {
+                return get(p, currentNode.left);
+            }
+
+        }
+        //Comparing Ys
+        else if (currentNode.lineDirection == HORIZONTAL){
+            if (compareY <= 0) {
+                return get(p, currentNode.right);
+            }
+
+            else if (compareY > 0) {
+                return get(p, currentNode.left);
+            }
+        }
+        return null;
     }
 
     /**
@@ -314,7 +299,7 @@ public class KdTreeST<Value> {
         if (p == null)
             throw new NullPointerException("Point cannot be null.");
 
-        return false; // TODO
+        return get(p) != null;
     }
 
     /**
@@ -378,13 +363,20 @@ public class KdTreeST<Value> {
     public static void main(String[] args) {
     	KdTreeST<Integer> kd = new KdTreeST<Integer>();
 
-    	kd.put(new Point2D(2, 3), 1);    
-    	kd.put(new Point2D(4, 2), 2);    	
-    	kd.put(new Point2D(4, 5), 3);    	
-    	kd.put(new Point2D(3, 3), 4);    	
-    	kd.put(new Point2D(1, 5), 5);  
-    	kd.put(new Point2D(4, 4), 6);    	
+    	kd.put(new Point2D(2, 3), 1);
+    	kd.put(new Point2D(4, 2), 2);
+    	kd.put(new Point2D(4, 5), 3);
+    	kd.put(new Point2D(3, 3), 4);
+    	kd.put(new Point2D(1, 5), 5);
+    	kd.put(new Point2D(4, 4), 6);
+        kd.put(new Point2D(4, 4), 7); //duplicate test
 
-        System.out.println("Hello world!");
+
+        System.out.printf("Point (2,3) is at value %d\n", kd.get(new Point2D(2,3)));
+        System.out.printf("Point (4,2) is at value %d\n", kd.get(new Point2D(4,2)));
+        System.out.printf("Point (4,5) is at value %d\n", kd.get(new Point2D(4,5)));
+        System.out.printf("Point (3,3) is at value %d\n", kd.get(new Point2D(3,3)));
+        System.out.printf("Point (1,5) is at value %d\n", kd.get(new Point2D(1,5)));
+        System.out.printf("Point (4,4) is at value %d\n", kd.get(new Point2D(4,4)));
     }
 }
