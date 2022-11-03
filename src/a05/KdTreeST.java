@@ -267,7 +267,7 @@ public class KdTreeST<Value> {
                 parentNode.value = val;
             }
         }
-
+        //Comparing Ys
         else if (parentNode.lineDirection == HORIZONTAL){
             if (compareY < 0) {
                 parentNode.rt = put(parentNode.rt, newPoint, val);
@@ -281,7 +281,6 @@ public class KdTreeST<Value> {
                 parentNode.value = val;
             }
         }
-
         return parentNode;
     }
     /**
