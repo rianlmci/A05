@@ -16,7 +16,6 @@ public class KdTreeST<Value> {
     private static final boolean HORIZONTAL = false; // - in a tree
     private Node root; //root of the tree
     int size = 0; // size of the tree
-    int height = 0; //height of the tree
     private class Node {
         private Point2D p; 		// the point
         private Value value; 	// the symbol table maps the point to this value
@@ -177,7 +176,13 @@ public class KdTreeST<Value> {
     public void put(Point2D p, Value val) {
         if (p == null || val == null)
             throw new NullPointerException("Input cannot be null.");
+        if (val == null) { //break statement?
+            return;
+        }
+        root = put(root, p, val); // starts recursion @ root
 
+        //OLD CODE BELOW HERE THAT WAS WIP ITERATIVE:
+        /*
         Node newNode = new Node(p,val);
 
         if(isEmpty()){
@@ -187,24 +192,25 @@ public class KdTreeST<Value> {
         Node current = root;
 
         //NAVIGATE TO THE BOTTOM OF THE TREE...
-        while (current.lb != null || current.rt != null) /*current has children*/ {
+        while (current.lb != null || current.rt != null)  { //current has children
             //We look at comparing x or y based on the parent’s bound-direction.
             if (current.lineDirection == VERTICAL) {
                 if (current.p.x() > p.x()) { //if the node we insert is less than the parent
                     current = current.lb; //we go to the left of the tree
                 }
-                else/*greater or equal to the parent i.e 'not left'*/ {
+                else { //greater or equal to the parent i.e 'not left'
                     current = current.rt; //we go to the right of the tree
                 }
             }
-            else/*line direction is horizontal*/ {
+            else { ///line direction is horizontal
                 if (current.p.y() > p.y()) { //if the node we insert is less than the parent
                     current = current.lb; //we go to the left of the tree
                 }
-                else/*greater or equal to the parent i.e 'not left'*/ {
+                else{ //greater or equal to the parent i.e 'not left'
                     current = current.rt; //we go to the right of the tree
                 }
             }
+
         }
 
         //Do one last compare to end point
@@ -213,20 +219,71 @@ public class KdTreeST<Value> {
             if (current.p.x() > p.x()) { //if the node we insert is less than the parent
                 current.lb = newNode; //we go to the left of the tree
             }
-            else/*greater or equal to the parent i.e 'not left'*/ {
+            else{ //greater or equal to the parent i.e 'not left'
                 current.rt =newNode; //we go to the right of the tree
             }
         }
-        else/*line direction is horizontal*/ {
+        else { //line direction is horizontal
             if (current.p.y() > p.y()) { //if the node we insert is less than the parent
                current.lb = newNode; //we go to the left of the tree
             }
-            else/*greater or equal to the parent i.e 'not left'*/ {
+            else{ //greater or equal to the parent i.e 'not left'
                 current.rt = newNode; //we go to the right of the tree
             }
         }
+        */
+        //END OF OLD WIP CODE
     }
 
+    /**
+     * Helper method for put.
+     * @param parentNode
+     * @param newPoint
+     * @param val
+     * @return
+     */
+    private Node put(Node parentNode, Point2D newPoint, Value val){
+        if (parentNode == null) {
+            return new Node(newPoint, val);
+        }
+
+        // 0 if parent == new child point
+        // less than 0 if parent is less than new child point
+        // greater than 0 if parent is greater than new child point
+        int compareX =  Double.compare(parentNode.p.x(), newPoint.x());
+        int compareY =  Double.compare(parentNode.p.y(), newPoint.y());
+        
+        //Comparing Xs
+        if (parentNode.lineDirection == VERTICAL){
+            if (compareX < 0) {  //
+                parentNode.rt = put(parentNode.rt, newPoint, val);
+            }
+
+            else if (compareX > 0) {
+                parentNode.lb = put(parentNode.lb, newPoint, val);
+            }
+
+            else {
+                parentNode.value = val;
+            }
+        }
+
+        else if (parentNode.lineDirection == HORIZONTAL){
+            if (compareY < 0) {
+                parentNode.rt = put(parentNode.rt, newPoint, val);
+            }
+
+            else if (compareY > 0) {
+                parentNode.lb = put(parentNode.lb, newPoint, val);
+            }
+
+            else {
+                parentNode.value = val;
+            }
+        }
+
+        return parentNode;
+    }
     /**
      * Returns the value associated with the point p.
      *
