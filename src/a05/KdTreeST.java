@@ -292,7 +292,7 @@ public class KdTreeST<Value> {
     /*
      * hints:
      * - splitting line can be thought of as left or not left therefore if the value
-     * is less then it goes to the left everything else goes right
+     * is less than it, it goes to the left, and everything else goes right
      * - best implemented using private helper methods, see BST.java,
      * recommended: use orientation (vertical or horizontal) as an argument to 
      * the helper method
