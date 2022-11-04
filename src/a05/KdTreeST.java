@@ -311,7 +311,18 @@ public class KdTreeST<Value> {
 	 * structure
 	 */
 	public Iterable<Point2D> points() {
-		return null; // TODO
+		Queue<Point2D> keys = new Queue<Point2D>();
+		Queue<Node> queue = new Queue<Node>();
+		queue.enqueue(root);
+		while (!queue.isEmpty()) {
+			Node x = queue.dequeue();
+			if (x == null)
+				continue;
+			keys.enqueue(x.p);
+			queue.enqueue(x.left);
+			queue.enqueue(x.right);
+		}
+		return keys;
 	}
 
 	/**
@@ -356,7 +367,7 @@ public class KdTreeST<Value> {
 			}
 			intersectingPoints(currentNode.left, rect, q);
 			intersectingPoints(currentNode.right, rect, q);
-		} 
+		}
 //		else {
 //			return q;
 //		}
@@ -398,7 +409,9 @@ public class KdTreeST<Value> {
 		kd.put(new Point2D(4, 4), 6);
 		kd.put(new Point2D(4, 4), 7); // duplicate test
 
-		System.out.println(kd.range(new RectHV(1.3, 2.3, 3.6, 3.6))); // expected (2, 3), (3, 3)
+		System.out.println("range: " + kd.range(new RectHV(1.3, 2.3, 3.6, 3.6))); // expected (2, 3), (3, 3)
+		System.out.println("points in traveral level-order: " + kd.points());
+		System.out.println();
 
 		System.out.printf("Point (2,3) is at value %d\n", kd.get(new Point2D(2, 3)));
 		System.out.printf("Point (4,2) is at value %d\n", kd.get(new Point2D(4, 2)));
