@@ -195,11 +195,11 @@ public class KdTreeST<Value> {
 
 		// Comparing Xs
 		if (parentNode.lineDirection == VERTICAL) {
-			navigateTree(parentNode, newPoint, val, compareX);
+			navigateTreePut(parentNode, newPoint, val, compareX);
 		}
 		// Comparing Ys
 		else if (parentNode.lineDirection == HORIZONTAL) {
-			navigateTree(parentNode, newPoint, val, compareY);
+			navigateTreePut(parentNode, newPoint, val, compareY);
 		}
 		return parentNode;
 	}
@@ -214,7 +214,7 @@ public class KdTreeST<Value> {
 	 * @param compareXorY result of Double.compare from either an X or a Y coord,
 	 *                    used to navigate the tree
 	 */
-	private void navigateTree(Node parentNode, Point2D newPoint, Value val, int compareXorY) {
+	private void navigateTreePut(Node parentNode, Point2D newPoint, Value val, int compareXorY) {
 		if (compareXorY <= 0) {
 			parentNode.right = put(parentNode.right, newPoint, val);
 		}
@@ -222,7 +222,6 @@ public class KdTreeST<Value> {
 		else if (compareXorY > 0) {
 			parentNode.left = put(parentNode.left, newPoint, val);
 		}
-
 	}
 
 	/**
@@ -368,19 +367,10 @@ public class KdTreeST<Value> {
 			intersectingPoints(currentNode.left, rect, q);
 			intersectingPoints(currentNode.right, rect, q);
 		}
-//		else {
-//			return q;
-//		}
 		return q;
 	}
 
-	/**
-	 * Returns the nearest neighbor to point p. Returns null if the symbol table is
-	 * empty.
-	 *
-	 * @param p Point2D
-	 * @return the nearest point
-	 */
+
 	/*
 	 * hints: - when there are 2 subtrees to explore, choose the first subtree that
 	 * is on the same side of the splitting line as the query point. - do not search
@@ -388,12 +378,84 @@ public class KdTreeST<Value> {
 	 * query point than the best candidate point found so far. - if there are two
 	 * (or more) nearest points return any one
 	 */
-	public Point2D nearest(Point2D p) {
-		if (p == null)
-			throw new NullPointerException("Point cannot be null.");
 
-		return null; // TODO
+
+
+
+	/**
+	 * Gives the nearest approximate point to the given point
+	 * @param p given point
+	 * @return nearest point to given point.
+	 * @throws NullPointerException if <code>p</code> is null.
+	 */
+	public Point2D nearest(Point2D p){
+		if (p == null) {
+			throw new NullPointerException();
+		}
+
+		if(isEmpty()){
+			return null;
+		}
+
+		if (this.contains(p)){
+			return p;
+		}
+
+		Double currentChampionDistance = Double.POSITIVE_INFINITY;
+		Node winningNode = nearestHelper(root, p, currentChampionDistance, null);
+
+		return winningNode.p;
 	}
+
+	/**
+	 * @param currentNode the node we are investigating
+	 * @param p
+	 * @return
+	 */
+	private Node nearestHelper(Node currentNode, Point2D p, Double currentChampionDistance, Node championNode) {
+		if (currentNode == null) {
+			return championNode;
+		}
+
+		//"if the closest point discovered so far is closer
+		//than the distance between the query point and the rectangle corresponding to a node"
+		if (currentChampionDistance > currentNode.rect.distanceSquaredTo(p)){
+			if (p.distanceSquaredTo(currentNode.p) < currentChampionDistance) { // is this distance less than the champ
+				championNode = currentNode;
+				currentChampionDistance = p.distanceSquaredTo(currentNode.p);
+			}
+
+			int compareX = Double.compare(currentNode.p.x(), p.x());
+			int compareY = Double.compare(currentNode.p.y(), p.y());
+
+			// Comparing Xs
+			if (currentNode.lineDirection == VERTICAL) {
+				if (compareX <= 0 && currentNode.right != null) {
+					nearestHelper(currentNode.right,p,currentChampionDistance, championNode);
+				}
+
+				else if (compareX > 0 && currentNode.left != null) {
+					nearestHelper(currentNode.left,p,currentChampionDistance, championNode);
+				}
+			}
+
+			// Comparing Ys
+			else if (currentNode.lineDirection == HORIZONTAL) {
+				if (compareY<= 0 && currentNode.right != null) {
+					nearestHelper(currentNode.right,p,currentChampionDistance, championNode);
+				}
+
+				else if (compareY > 0 && currentNode.left != null) {
+					nearestHelper(currentNode.left,p,currentChampionDistance, championNode);
+				}
+			}
+			//nearestHelper(currentNode.left,p,currentChampionDistance, championNode);
+			//nearestHelper(currentNode.right,p,currentChampionDistance, championNode);
+		}
+		return championNode;
+	}
+
+
 
 	/*
 	 * = = = Test Client = = =
@@ -408,16 +470,20 @@ public class KdTreeST<Value> {
 		kd.put(new Point2D(1, 5), 5);
 		kd.put(new Point2D(4, 4), 6);
 		kd.put(new Point2D(4, 4), 7); // duplicate test
+        kd.put(new Point2D(5, 3), 8); // testing range
 
+        kd.range(new RectHV(1.3, 2.3, 3.6, 3.6));
 		System.out.println("range: " + kd.range(new RectHV(1.3, 2.3, 3.6, 3.6))); // expected (2, 3), (3, 3)
 		System.out.println("points in traveral level-order: " + kd.points());
 		System.out.println();
-
 		System.out.printf("Point (2,3) is at value %d\n", kd.get(new Point2D(2, 3)));
 		System.out.printf("Point (4,2) is at value %d\n", kd.get(new Point2D(4, 2)));
 		System.out.printf("Point (4,5) is at value %d\n", kd.get(new Point2D(4, 5)));
 		System.out.printf("Point (3,3) is at value %d\n", kd.get(new Point2D(3, 3)));
 		System.out.printf("Point (1,5) is at value %d\n", kd.get(new Point2D(1, 5)));
 		System.out.printf("Point (4,4) is at value %d\n", kd.get(new Point2D(4, 4)));
+		System.out.println();
+		kd.nearest(new Point2D(4.2, 1.5));
+		System.out.printf("The closest point to (4.2,1.5) is at point %s\n", kd.nearest(new Point2D(4.2, 1.5)).toString());
 	}
 }
