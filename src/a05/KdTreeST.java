@@ -354,10 +354,12 @@ public class KdTreeST<Value> {
 			if (rect.contains(currentNode.p)) { // is the current node in the rectangle
 				q.enqueue(currentNode.p); // add to queue if current node is in rectangle
 			}
-		}
-		intersectingPoints(currentNode.left, rect, q);
-		intersectingPoints(currentNode.right, rect, q);
-
+			intersectingPoints(currentNode.left, rect, q);
+			intersectingPoints(currentNode.right, rect, q);
+		} 
+//		else {
+//			return q;
+//		}
 		return q;
 	}
 
