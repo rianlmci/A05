@@ -483,6 +483,7 @@ public class KdTreeST<Value> {
 		System.out.printf("Point (1,5) is at value %d\n", kd.get(new Point2D(1, 5)));
 		System.out.printf("Point (4,4) is at value %d\n", kd.get(new Point2D(4, 4)));
 		System.out.println();
+		//BROKEN BELOW:
 		kd.nearest(new Point2D(4.2, 1.5));
 		System.out.printf("The closest point to (4.2,1.5) is at point %s\n", kd.nearest(new Point2D(4.2, 1.5)).toString());
 	}
