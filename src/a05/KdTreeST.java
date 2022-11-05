@@ -15,6 +15,8 @@ public class KdTreeST<Value> {
 	private final boolean HORIZONTAL = false; // - in a tree
 	private Node root; // root of the tree
 	int size = 0; // size of the tree
+	private double distToCompare; // holds the distance needed to compare for the nearest point
+	private Point2D championPoint; // the nearest point to p
 
 	private class Node {
 		private Point2D p; // the point
@@ -310,6 +312,10 @@ public class KdTreeST<Value> {
 	 * structure
 	 */
 	public Iterable<Point2D> points() {
+		if (isEmpty()) {
+			return new Queue<Point2D>();
+		}
+		
 		Queue<Point2D> keys = new Queue<Point2D>();
 		Queue<Node> queue = new Queue<Node>();
 		queue.enqueue(root);
@@ -345,13 +351,14 @@ public class KdTreeST<Value> {
 		return intersectingPoints(root, rect, q);
 	}
 
-	// TODO:
-	// traverse the kd tree
-	// if the node intersects the rectangle add node to queue (using
-	// rect.intersects)
-	// loop through the queue of nodes to see if the points are in the rectangle
-	// (using rect.contains p)
-	// start at root, go left, go right
+	/**
+	 * Helper method for range. Determines if point(s) intersects and is contained
+	 * within a given rectangle.
+	 * @param node
+	 * @param r
+	 * @param q
+	 * @return
+	 */
 	private Iterable<Point2D> intersectingPoints(Node node, RectHV r, Queue<Point2D> q) {
 		Node currentNode = node;
 		RectHV rect = r;
@@ -388,6 +395,7 @@ public class KdTreeST<Value> {
 	 * @return nearest point to given point.
 	 * @throws NullPointerException if <code>p</code> is null.
 	 */
+	/*
 	public Point2D nearest(Point2D p){
 		if (p == null) {
 			throw new NullPointerException();
@@ -405,13 +413,14 @@ public class KdTreeST<Value> {
 		Node winningNode = nearestHelper(root, p, currentChampionDistance, null);
 
 		return winningNode.p;
-	}
+	} */
 
 	/**
 	 * @param currentNode the node we are investigating
 	 * @param p
 	 * @return
 	 */
+	/*
 	private Node nearestHelper(Node currentNode, Point2D p, Double currentChampionDistance, Node championNode) {
 		if (currentNode == null) {
 			return championNode;
@@ -453,9 +462,89 @@ public class KdTreeST<Value> {
 			//nearestHelper(currentNode.right,p,currentChampionDistance, championNode);
 		}
 		return championNode;
+	} */
+	
+	
+	// ======== UPDATED NEAREST METHOD BELOW ========
+	
+	/**
+	 * Returns the nearest neighbor of point p. Returns null if the symbol table is
+	 * empty. 
+	 * @param p
+	 * @return
+	 */
+	public Point2D nearest(Point2D p) {
+		if (p == null)
+			throw new NullPointerException("Point cannot be null.");
+
+		if(isEmpty()){
+			return null;
+		}
+
+		if (this.contains(p)){
+			return p;
+		}
+		
+		distToCompare = root.p.distanceSquaredTo(p);
+		return nearest(root, p);
 	}
 
+	/**
+	 * Helper method used to determine the nearest point to p.
+	 * @param x
+	 * @param p
+	 * @return
+	 */
+	private Point2D nearest(Node x, Point2D p) {
+		if (x == null) {
+			return championPoint;
+		}
+		
+		Node currentNode = x;
+		if (currentNode.p.distanceSquaredTo(p) <= distToCompare) {
+			championPoint = currentNode.p;
+			this.distToCompare = currentNode.p.distanceSquaredTo(p);
+		}
+		
+		if (currentNode.lineDirection == VERTICAL) {
+			if (currentNode.p.x() <= p.x()) {
+				traverseRightThenLeft(p, currentNode);
+			} 
+			else {
+				traverseLeftThenRight(p, currentNode);
+			}
+		}
+		
+		if (currentNode.lineDirection == HORIZONTAL) {
+			if (currentNode.p.y() <= p.y()) {
+				traverseLeftThenRight(p, currentNode);
+			} 
+			else {
+				traverseRightThenLeft(p, currentNode);
+			}
+		}
+		return championPoint;
+	}
 
+	/**
+	 * Traverses the kd-tree left then right.
+	 * @param p
+	 * @param currentNode
+	 */
+	private void traverseLeftThenRight(Point2D p, Node currentNode) {
+		nearest(currentNode.left, p);
+		nearest(currentNode.right, p);
+	}
+
+	/**
+	 * Traverses the kd-tree right then left.
+	 * @param p
+	 * @param currentNode
+	 */
+	private void traverseRightThenLeft(Point2D p, Node currentNode) {
+		nearest(currentNode.right, p);
+		nearest(currentNode.left, p);
+	}
 
 	/*
 	 * = = = Test Client = = =
@@ -486,5 +575,9 @@ public class KdTreeST<Value> {
 		//BROKEN BELOW:
 		kd.nearest(new Point2D(4.2, 1.5));
 		System.out.printf("The closest point to (4.2,1.5) is at point %s\n", kd.nearest(new Point2D(4.2, 1.5)).toString());
+		System.out.printf("The closest point to (4, 3) is at point %s\n", kd.nearest(new Point2D(4, 3)).toString()); // can be any point (4, 4), or (4, 2)
+		System.out.printf("The closest point to (0, 0) is at point %s\n", kd.nearest(new Point2D(0, 0)).toString());
+		System.out.printf("The closest point to (0.1, 6) is at point %s\n", kd.nearest(new Point2D(0.1, 6)).toString());
+
 	}
 }
