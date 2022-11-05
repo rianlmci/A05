@@ -392,29 +392,31 @@ public class KdTreeST<Value> {
 		}
 		
 		Node currentNode = x;
-		if (currentNode.p.distanceSquaredTo(p) <= distToCompare) {
-			championPoint = currentNode.p;
-			this.distToCompare = currentNode.p.distanceSquaredTo(p);
-		}
-		
-		if (currentNode.lineDirection == VERTICAL) {
-			if (currentNode.p.x() <= p.x()) {
-				traverseRightThenLeft(p, currentNode);
-			} 
-			else {
-				traverseLeftThenRight(p, currentNode);
+		//"if the closest point discovered so far is closer
+		//than the distance between the query point and the rectangle corresponding to a node"
+
+			if (currentNode.p.distanceSquaredTo(p) <= distToCompare) {
+				championPoint = currentNode.p;
+				this.distToCompare = currentNode.p.distanceSquaredTo(p);
 			}
-		}
-		
-		if (currentNode.lineDirection == HORIZONTAL) {
-			if (currentNode.p.y() <= p.y()) {
-				traverseLeftThenRight(p, currentNode);
-			} 
-			else {
-				traverseRightThenLeft(p, currentNode);
+			if (championPoint.distanceSquaredTo(p) > currentNode.rect.distanceSquaredTo(p)) {
+				if (currentNode.lineDirection == VERTICAL) {
+					if (currentNode.p.x() <= p.x()) {
+						traverseRightThenLeft(p, currentNode);
+					} else {
+						traverseLeftThenRight(p, currentNode);
+					}
+				}
+
+				if (currentNode.lineDirection == HORIZONTAL) {
+					if (currentNode.p.y() <= p.y()) {
+						traverseLeftThenRight(p, currentNode);
+					} else {
+						traverseRightThenLeft(p, currentNode);
+					}
+				}
 			}
-		}
-		return championPoint;
+			return championPoint;
 	}
 
 	/**
@@ -449,8 +451,8 @@ public class KdTreeST<Value> {
 		kd.put(new Point2D(3, 3), 4);
 		kd.put(new Point2D(1, 5), 5);
 		kd.put(new Point2D(4, 4), 6);
-		kd.put(new Point2D(4, 4), 7); // duplicate test
-        kd.put(new Point2D(5, 3), 8); // testing range
+		//kd.put(new Point2D(4, 4), 7); // duplicate test
+        //kd.put(new Point2D(5, 3), 8); // testing range
 
         kd.range(new RectHV(1.3, 2.3, 3.6, 3.6));
 		System.out.println("range: " + kd.range(new RectHV(1.3, 2.3, 3.6, 3.6))); // expected (2, 3), (3, 3)
