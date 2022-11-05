@@ -37,7 +37,6 @@ public class KdTreeST<Value> {
 				size += 1;
 				return;
 			}
-
 			this.rect = createBoundsAndLineDirections(p);
 			size += 1;
 		}
@@ -62,43 +61,48 @@ public class KdTreeST<Value> {
 			if (current.p == p) {
 				return current.rect; // don't update bounds for duplicates
 			}
-			// We look at comparing x or y based on the parent’s bound-direction
+			// We look at comparing x or y based on the parents bound-direction
 			// (horizontal or vertical)
 			if (current.lineDirection == VERTICAL) { // if we are comparing x, we update the x bounds
 				if (current.p.x() > p.x()) { // if the node we insert is less than the parent...
 					currentXMax = current.p.x(); // Update max bound (X)
 					if (current.left != null) {// we go to the left of the node,if it exists.
-						current.left.lineDirection = !current.lineDirection; // set line direction of nodes as we go
-																				// down
+						current.left.lineDirection = !current.lineDirection; //set line direction of nodes as we go down
 						current = current.left;
-					} else {// reached leaf, return.
+					}
+					else {// reached leaf, return.
 						return new RectHV(currentXMin, currentYMin, currentXMax, currentYMax);
 					}
-				} else {// if the node we insert is greater or equal to parent...
+				}
+				else {// if the node we insert is greater or equal to parent...
 					currentXMin = current.p.x(); // Update min bound (X)
 					if (current.right != null) {
 						current.right.lineDirection = !current.lineDirection;
 						current = current.right;
-					} else {
+					}
+					else {
 						return new RectHV(currentXMin, currentYMin, currentXMax, currentYMax);
 					}
 				}
-			} else {// line direction is horizontal, and if we are comparing y, we update the y
-					// bounds
+			}
+			else {// line direction is horizontal, and if we are comparing y, we update the y bounds
 				if (current.p.y() > p.y()) {// if the node we insert is less than the parent...
 					currentYMax = current.p.y(); // Update max bound (Y)
 					if (current.left != null) {
 						current.left.lineDirection = !current.lineDirection;
 						current = current.left;
-					} else {
+					}
+					else {
 						return new RectHV(currentXMin, currentYMin, currentXMax, currentYMax);
 					}
-				} else {// if the node we insert is greater or equal to parent...
+				}
+				else {// if the node we insert is greater or equal to parent...
 					currentYMin = current.p.y(); // Update min bound (Y)
 					if (current.right != null) {
 						current.right.lineDirection = !current.lineDirection;
 						current = current.right;
-					} else {
+					}
+					else {
 						return new RectHV(currentXMin, currentYMin, currentXMax, currentYMax);
 					}
 				}
@@ -108,16 +112,17 @@ public class KdTreeST<Value> {
 		if (current.lineDirection == VERTICAL) {
 			if (current.p.x() > p.x()) {
 				currentXMax = current.p.x(); // Update max bound (X) one final time...
-			} else {
+			}
+			else {
 				currentXMin = current.p.x(); // Update min bound (X) one final time...
 			}
 		}
 
-		else {// line direction is horizontal, and if we are comparing y, we update the y
-				// bounds
+		else {// line direction is horizontal, and if we are comparing y, we update the y bounds
 			if (current.p.y() > p.y()) {// if the node we insert is less than the parent
 				currentYMax = current.p.y(); // Update max bound (Y) one final time...
-			} else {// greater or equal to the parent
+			}
+			else {// greater or equal to the parent
 				currentYMin = current.p.y(); // Update min bound (Y) one final time...
 			}
 		}
@@ -153,13 +158,6 @@ public class KdTreeST<Value> {
 	 * 
 	 * @param p
 	 * @param val
-	 */
-	/*
-	 * hints: - splitting line can be thought of as left or not left therefore if
-	 * the value is less than, it goes to the left and everything else goes right -
-	 * If the point already exists, the old value is replaced with the new value. -
-	 * best implemented using private helper methods, see BST.java, recommended: use
-	 * orientation (vertical or horizontal) as an argument to the helper method
 	 */
 	public void put(Point2D p, Value val) {
 		if (p == null || val == null)
@@ -232,12 +230,6 @@ public class KdTreeST<Value> {
 	 * @param p
 	 * @return
 	 */
-	/*
-	 * hints: - splitting line can be thought of as left or not left therefore if
-	 * the value is less then it goes to the left everything else goes right - best
-	 * implemented using private helper methods, see BST.java, recommended: use
-	 * orientation (vertical or horizontal) as an argument to the helper method
-	 */
 	public Value get(Point2D p) {
 		if (p == null)
 			throw new NullPointerException("Point cannot be null.");
@@ -307,10 +299,6 @@ public class KdTreeST<Value> {
 	 *
 	 * @return keys in the symbol table
 	 */
-	/*
-	 * hints: - returns iterable with zero points if there are no points in the data
-	 * structure
-	 */
 	public Iterable<Point2D> points() {
 		if (isEmpty()) {
 			return new Queue<Point2D>();
@@ -335,13 +323,6 @@ public class KdTreeST<Value> {
 	 *
 	 * @param rect
 	 * @return
-	 */
-	/*
-	 * hints: - do not search a subtree whose corresponding rectangle doesn't
-	 * intersect the query rectangle - points on the boundary of a rectangle are
-	 * considered - two rectangles intersect if they have just one point in common -
-	 * returns iterable with zero points if there are no points in the data
-	 * structure
 	 */
 	public Iterable<Point2D> range(RectHV rect) {
 		if (rect == null)
@@ -377,96 +358,6 @@ public class KdTreeST<Value> {
 		return q;
 	}
 
-
-	/*
-	 * hints: - when there are 2 subtrees to explore, choose the first subtree that
-	 * is on the same side of the splitting line as the query point. - do not search
-	 * a subtree if no point in its corresponding rectangle could be closer to the
-	 * query point than the best candidate point found so far. - if there are two
-	 * (or more) nearest points return any one
-	 */
-
-
-
-
-	/**
-	 * Gives the nearest approximate point to the given point
-	 * @param p given point
-	 * @return nearest point to given point.
-	 * @throws NullPointerException if <code>p</code> is null.
-	 */
-	/*
-	public Point2D nearest(Point2D p){
-		if (p == null) {
-			throw new NullPointerException();
-		}
-
-		if(isEmpty()){
-			return null;
-		}
-
-		if (this.contains(p)){
-			return p;
-		}
-
-		Double currentChampionDistance = Double.POSITIVE_INFINITY;
-		Node winningNode = nearestHelper(root, p, currentChampionDistance, null);
-
-		return winningNode.p;
-	} */
-
-	/**
-	 * @param currentNode the node we are investigating
-	 * @param p
-	 * @return
-	 */
-	/*
-	private Node nearestHelper(Node currentNode, Point2D p, Double currentChampionDistance, Node championNode) {
-		if (currentNode == null) {
-			return championNode;
-		}
-
-		//"if the closest point discovered so far is closer
-		//than the distance between the query point and the rectangle corresponding to a node"
-		if (currentChampionDistance > currentNode.rect.distanceSquaredTo(p)){
-			if (p.distanceSquaredTo(currentNode.p) < currentChampionDistance) { // is this distance less than the champ
-				championNode = currentNode;
-				currentChampionDistance = p.distanceSquaredTo(currentNode.p);
-			}
-
-			int compareX = Double.compare(currentNode.p.x(), p.x());
-			int compareY = Double.compare(currentNode.p.y(), p.y());
-
-			// Comparing Xs
-			if (currentNode.lineDirection == VERTICAL) {
-				if (compareX <= 0 && currentNode.right != null) {
-					nearestHelper(currentNode.right,p,currentChampionDistance, championNode);
-				}
-
-				else if (compareX > 0 && currentNode.left != null) {
-					nearestHelper(currentNode.left,p,currentChampionDistance, championNode);
-				}
-			}
-
-			// Comparing Ys
-			else if (currentNode.lineDirection == HORIZONTAL) {
-				if (compareY<= 0 && currentNode.right != null) {
-					nearestHelper(currentNode.right,p,currentChampionDistance, championNode);
-				}
-
-				else if (compareY > 0 && currentNode.left != null) {
-					nearestHelper(currentNode.left,p,currentChampionDistance, championNode);
-				}
-			}
-			//nearestHelper(currentNode.left,p,currentChampionDistance, championNode);
-			//nearestHelper(currentNode.right,p,currentChampionDistance, championNode);
-		}
-		return championNode;
-	} */
-	
-	
-	// ======== UPDATED NEAREST METHOD BELOW ========
-	
 	/**
 	 * Returns the nearest neighbor of point p. Returns null if the symbol table is
 	 * empty. 
@@ -572,7 +463,6 @@ public class KdTreeST<Value> {
 		System.out.printf("Point (1,5) is at value %d\n", kd.get(new Point2D(1, 5)));
 		System.out.printf("Point (4,4) is at value %d\n", kd.get(new Point2D(4, 4)));
 		System.out.println();
-		//BROKEN BELOW:
 		kd.nearest(new Point2D(4.2, 1.5));
 		System.out.printf("The closest point to (4.2,1.5) is at point %s\n", kd.nearest(new Point2D(4.2, 1.5)).toString());
 		System.out.printf("The closest point to (4, 3) is at point %s\n", kd.nearest(new Point2D(4, 3)).toString()); // can be any point (4, 4), or (4, 2)
