@@ -160,7 +160,7 @@ public class KdTreeST<Value> {
 	 * @param val
 	 */
 	public void put(Point2D p, Value val) {
-		if (p == null || val == null)
+		if (p == null && val == null)
 			throw new NullPointerException("Input cannot be null.");
 		if (val == null) { // break statement
 			return;
@@ -377,6 +377,7 @@ public class KdTreeST<Value> {
 		}
 		
 		distToCompare = root.p.distanceSquaredTo(p);
+		championPoint = root.p;
 		return nearest(root, p);
 	}
 
@@ -386,33 +387,46 @@ public class KdTreeST<Value> {
 	 * @param p
 	 * @return
 	 */
-	private Point2D nearest(Node x, Point2D p) {
-		if (x == null) {
+	private Point2D nearest(Node currentNode, Point2D p) {
+		if (currentNode == null) {
 			return championPoint;
 		}
-		
-		Node currentNode = x;
-		//"if the closest point discovered so far is closer
-		//than the distance between the query point and the rectangle corresponding to a node"
+	
 
-			if (currentNode.p.distanceSquaredTo(p) <= distToCompare) {
-				championPoint = currentNode.p;
-				this.distToCompare = currentNode.p.distanceSquaredTo(p);
-			}
+		
 			if (championPoint.distanceSquaredTo(p) > currentNode.rect.distanceSquaredTo(p)) {
+				
+				//check if currentNode.p is closer than championPoint
+				//"if the closest point discovered so far is closer
+				//than the distance between the query point and the rectangle corresponding to a node"
+
+					if (currentNode.p.distanceSquaredTo(p) < distToCompare) {
+						championPoint = currentNode.p;
+						distToCompare = currentNode.p.distanceSquaredTo(p);
+					}
+				
+				
 				if (currentNode.lineDirection == VERTICAL) {
 					if (currentNode.p.x() <= p.x()) {
-						traverseRightThenLeft(p, currentNode);
+						//traverseRightThenLeft(p, currentNode);
+						nearest(currentNode.right, p);
+						nearest(currentNode.left, p);
 					} else {
-						traverseLeftThenRight(p, currentNode);
+						//traverseLeftThenRight(p, currentNode);
+						nearest(currentNode.left, p);
+						nearest(currentNode.right, p);
 					}
 				}
 
 				if (currentNode.lineDirection == HORIZONTAL) {
 					if (currentNode.p.y() <= p.y()) {
-						traverseLeftThenRight(p, currentNode);
+						//traverseLeftThenRight(p, currentNode);
+						nearest(currentNode.right, p);
+						nearest(currentNode.left, p);
 					} else {
-						traverseRightThenLeft(p, currentNode);
+						//traverseRightThenLeft(p, currentNode);
+						nearest(currentNode.left, p);
+						nearest(currentNode.right, p);
 					}
 				}
 			}
@@ -443,33 +457,90 @@ public class KdTreeST<Value> {
 	 * = = = Test Client = = =
 	 */
 	public static void main(String[] args) {
-		KdTreeST<Integer> kd = new KdTreeST<Integer>();
+		KdTreeST<String> kdTree = new KdTreeST<>();
+        kdTree.put(new Point2D(1.0, 5.0), "first");
+        kdTree.put(new Point2D(7.5, -5.0), "second");
+        kdTree.put(new Point2D(-1.0, -1.0), "third");
+        kdTree.put(new Point2D(4.4, 7.4), "fourth");
+        kdTree.put(new Point2D(3.2, 3.3), "fifth");
 
-		kd.put(new Point2D(2, 3), 1);
-		kd.put(new Point2D(4, 2), 2);
-		kd.put(new Point2D(4, 5), 3);
-		kd.put(new Point2D(3, 3), 4);
-		kd.put(new Point2D(1, 5), 5);
-		kd.put(new Point2D(4, 4), 6);
-		//kd.put(new Point2D(4, 4), 7); // duplicate test
-        //kd.put(new Point2D(5, 3), 8); // testing range
+        for (Point2D p : kdTree.points()) {
+            System.out.println(p.toString());
+        }
 
-        kd.range(new RectHV(1.3, 2.3, 3.6, 3.6));
-		System.out.println("range: " + kd.range(new RectHV(1.3, 2.3, 3.6, 3.6))); // expected (2, 3), (3, 3)
-		System.out.println("points in traveral level-order: " + kd.points());
-		System.out.println();
-		System.out.printf("Point (2,3) is at value %d\n", kd.get(new Point2D(2, 3)));
-		System.out.printf("Point (4,2) is at value %d\n", kd.get(new Point2D(4, 2)));
-		System.out.printf("Point (4,5) is at value %d\n", kd.get(new Point2D(4, 5)));
-		System.out.printf("Point (3,3) is at value %d\n", kd.get(new Point2D(3, 3)));
-		System.out.printf("Point (1,5) is at value %d\n", kd.get(new Point2D(1, 5)));
-		System.out.printf("Point (4,4) is at value %d\n", kd.get(new Point2D(4, 4)));
-		System.out.println();
-		kd.nearest(new Point2D(4.2, 1.5));
-		System.out.printf("The closest point to (4.2,1.5) is at point %s\n", kd.nearest(new Point2D(4.2, 1.5)).toString());
-		System.out.printf("The closest point to (4, 3) is at point %s\n", kd.nearest(new Point2D(4, 3)).toString()); // can be any point (4, 4), or (4, 2)
-		System.out.printf("The closest point to (0, 0) is at point %s\n", kd.nearest(new Point2D(0, 0)).toString());
-		System.out.printf("The closest point to (0.1, 6) is at point %s\n", kd.nearest(new Point2D(0.1, 6)).toString());
+        KdTreeST<Integer> kdTreeSt = new KdTreeST<>();
+
+        System.out.println("Is empty: " + kdTreeSt.isEmpty());
+        System.out.println("Size: " + kdTreeSt.size());
+
+        // put test points into the PointST object
+        kdTreeSt.put(new Point2D(2, 3), 1);
+
+        System.out.println("Is empty: " + kdTreeSt.isEmpty());
+        System.out.println("Size: " + kdTreeSt.size());
+
+        kdTreeSt.put(new Point2D(4, 2), 2);
+        kdTreeSt.put(new Point2D(4, 5), 3);
+        kdTreeSt.put(new Point2D(3, 3), 4);
+        kdTreeSt.put(new Point2D(1, 5), 5);
+        kdTreeSt.put(new Point2D(4, 4), 6);
+
+        System.out.println("Is empty: " + kdTreeSt.isEmpty());
+        System.out.println("Size: " + kdTreeSt.size());
+
+        System.out.println("Find point (4, 5) [should be 3]: " + kdTreeSt.get(new Point2D(4, 5)));
+        System.out.println("Find point (4, 4) [should be 6]: " + kdTreeSt.get(new Point2D(4, 4)));
+        System.out.println("Find point (1, 5) [should be 5]: " + kdTreeSt.get(new Point2D(1, 5)));
+        System.out.println("Find point (2, 3) [should be 1]: " + kdTreeSt.get(new Point2D(2, 3)));
+        System.out.println("Contains point (2, 3) [true]: " + kdTreeSt.contains(new Point2D(2, 3)));
+        System.out.println("Find point (3, 3) [should be 4]: " + kdTreeSt.get(new Point2D(3, 3)));
+        System.out.println("Find point (10, 1) [not found]: " + kdTreeSt.get(new Point2D(10, 1)));
+        System.out.println("Contains point (10, 1) [false]: " + kdTreeSt.contains(new Point2D(10, 1)));
+
+        // print out all the points
+        System.out.print("Points in level order: ");
+        for (Point2D p : kdTreeSt.points()) {
+            System.out.print(p.toString() + " ");
+        }
+        System.out.println("\n");
+
+        // print out the nearest neighbor to a specific point
+        System.out.println("Nearest point to (3, 4): " + kdTreeSt.nearest(new Point2D(3, 4)));
+        System.out.println();
+
+        // print the points out that exist within a specific range:
+        System.out.println("Points within the range [(3.0, 2.0), (4.0, 3.0)]: ");
+        RectHV range1 = new RectHV(3.0, 2.0, 4.0, 3.0);
+        for (Point2D point : kdTreeSt.range(range1)) {
+            System.out.print(point.toString() + " ");
+        }
+//		KdTreeST<Integer> kd = new KdTreeST<Integer>();
+//
+//		kd.put(new Point2D(2, 3), 1);
+//		kd.put(new Point2D(4, 2), 2);
+//		kd.put(new Point2D(4, 5), 3);
+//		kd.put(new Point2D(3, 3), 4);
+//		kd.put(new Point2D(1, 5), 5);
+//		kd.put(new Point2D(4, 4), 6);
+//		//kd.put(new Point2D(4, 4), 7); // duplicate test
+//        //kd.put(new Point2D(5, 3), 8); // testing range
+//
+//        kd.range(new RectHV(1.3, 2.3, 3.6, 3.6));
+//		System.out.println("range: " + kd.range(new RectHV(1.3, 2.3, 3.6, 3.6))); // expected (2, 3), (3, 3)
+//		System.out.println("points in traveral level-order: " + kd.points());
+//		System.out.println();
+//		System.out.printf("Point (2,3) is at value %d\n", kd.get(new Point2D(2, 3)));
+//		System.out.printf("Point (4,2) is at value %d\n", kd.get(new Point2D(4, 2)));
+//		System.out.printf("Point (4,5) is at value %d\n", kd.get(new Point2D(4, 5)));
+//		System.out.printf("Point (3,3) is at value %d\n", kd.get(new Point2D(3, 3)));
+//		System.out.printf("Point (1,5) is at value %d\n", kd.get(new Point2D(1, 5)));
+//		System.out.printf("Point (4,4) is at value %d\n", kd.get(new Point2D(4, 4)));
+//		System.out.println();
+//		kd.nearest(new Point2D(4.2, 1.5));
+//		System.out.printf("The closest point to (4.2,1.5) is at point %s\n", kd.nearest(new Point2D(4.2, 1.5)).toString());
+//		System.out.printf("The closest point to (4, 3) is at point %s\n", kd.nearest(new Point2D(4, 3)).toString()); // can be any point (4, 4), or (4, 2)
+//		System.out.printf("The closest point to (0, 0) is at point %s\n", kd.nearest(new Point2D(0, 0)).toString());
+//		System.out.printf("The closest point to (0.1, 6) is at point %s\n", kd.nearest(new Point2D(0.1, 6)).toString());
 
 	}
 }
